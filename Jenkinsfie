@@ -1,0 +1,97 @@
+pipeline {
+
+    agent any
+
+    environment {
+        GCHAT_WEBHOOK = "GCHAT_WEBHOOK_URL"
+    }
+
+    stages {
+
+        stage('Checkout') {
+            steps {
+                git 'https://github.com/YOUR_GITHUB/devops-demo-app.git'
+            }
+        }
+
+        stage('Build Application') {
+            steps {
+                sh 'mvn clean package -DskipTests'
+            }
+        }
+
+        stage('Build Docker Image') {
+            steps {
+                sh 'docker build -t devops-demo .'
+            }
+        }
+
+        stage('Run Docker Container') {
+            steps {
+                sh '''
+                docker stop demo-container || true
+                docker rm demo-container || true
+                docker run -d -p 8081:8080 --name demo-container devops-demo
+                '''
+            }
+        }
+
+    }
+
+    post {
+
+        success {
+
+            script {
+
+                def commitAuthor = sh(script: "git log -1 --pretty=format:'%an'", returnStdout: true).trim()
+                def commitMessage = sh(script: "git log -1 --pretty=format:'%s'", returnStdout: true).trim()
+                def buildUser = currentBuild.getBuildCauses()[0].userName ?: "Webhook/Unknown"
+
+                sh """
+                curl -X POST -H 'Content-Type: application/json' \
+                -d '{
+                "text": "✅ BUILD SUCCESS
+
+                Triggered By: ${buildUser}
+                GitHub User: ${commitAuthor}
+                Commit Message: ${commitMessage}
+
+                Build URL:
+                ${env.BUILD_URL}
+                "}' \
+                ${GCHAT_WEBHOOK}
+                """
+            }
+
+        }
+
+        failure {
+
+            script {
+
+                def commitAuthor = sh(script: "git log -1 --pretty=format:'%an'", returnStdout: true).trim()
+                def commitMessage = sh(script: "git log -1 --pretty=format:'%s'", returnStdout: true).trim()
+                def buildUser = currentBuild.getBuildCauses()[0].userName ?: "Webhook/Unknown"
+
+                sh """
+                curl -X POST -H 'Content-Type: application/json' \
+                -d '{
+                "text": "❌ BUILD FAILED
+
+                Triggered By: ${buildUser}
+                GitHub User: ${commitAuthor}
+                Commit Message: ${commitMessage}
+
+                Build URL:
+                ${env.BUILD_URL}
+                "}' \
+                ${GCHAT_WEBHOOK}
+                """
+            }
+
+        }
+
+    }
+
+}

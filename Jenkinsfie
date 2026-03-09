@@ -3,13 +3,14 @@ pipeline {
     agent any
 
     environment {
-        GCHAT_WEBHOOK = "GCHAT_WEBHOOK_URL"
+        GCHAT_WEBHOOK = "https://chat.googleapis.com/v1/spaces/AAQA7VIMaGQ/messages?key=AIzaSyDdI0hCZtE6vySjMm-WEfRq3CPzqKqqsHI&token=Nnmz0IrEI8mqvpi0qGPCMh71VOkXIpEbsqz5QNoaBx4"
     }
 
     stages {
 
         stage('Checkout') {
             steps {
+                git branch: 'main',
                 git 'https://github.com/shradhamagdum-lgtm/Demo-app.git'
             }
         }

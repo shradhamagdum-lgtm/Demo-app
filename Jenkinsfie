@@ -1,9 +1,10 @@
 pipeline {
 
-        agent {
+    agent {
         docker {
             image 'maven:3.9.9-eclipse-temurin-17'
             args '-v /var/run/docker.sock:/var/run/docker.sock'
+            reuseNode true
         }
     }
 
@@ -48,22 +49,20 @@ pipeline {
         success {
             script {
 
-                def commitAuthor = sh(script: "git log -1 --pretty=format:'%an'", returnStdout: true).trim()
-                def commitMessage = sh(script: "git log -1 --pretty=format:'%s'", returnStdout: true).trim()
-                def buildUser = currentBuild.getBuildCauses()[0].userName ?: "Webhook/Unknown"
+                def commitAuthor = sh(script: "git log -1 --pretty=format:%an", returnStdout: true).trim()
+                def commitMessage = sh(script: "git log -1 --pretty=format:%s", returnStdout: true).trim()
+                def buildUser = currentBuild.getBuildCauses()[0]?.userName ?: "Webhook/Unknown"
 
                 sh """
-                curl -X POST -H 'Content-Type: application/json' \
-                -d '{
-                "text": "✅ BUILD SUCCESS
+                curl -X POST -H "Content-Type: application/json" \
+                -d "{\\"text\\": \\"✅ BUILD SUCCESS
 
 Triggered By: ${buildUser}
 GitHub User: ${commitAuthor}
 Commit Message: ${commitMessage}
 
 Build URL:
-${env.BUILD_URL}"
-                }' \
+${env.BUILD_URL}\\"}" \
                 ${GCHAT_WEBHOOK}
                 """
             }
@@ -72,22 +71,20 @@ ${env.BUILD_URL}"
         failure {
             script {
 
-                def commitAuthor = sh(script: "git log -1 --pretty=format:'%an'", returnStdout: true).trim()
-                def commitMessage = sh(script: "git log -1 --pretty=format:'%s'", returnStdout: true).trim()
-                def buildUser = currentBuild.getBuildCauses()[0].userName ?: "Webhook/Unknown"
+                def commitAuthor = sh(script: "git log -1 --pretty=format:%an", returnStdout: true).trim()
+                def commitMessage = sh(script: "git log -1 --pretty=format:%s", returnStdout: true).trim()
+                def buildUser = currentBuild.getBuildCauses()[0]?.userName ?: "Webhook/Unknown"
 
                 sh """
-                curl -X POST -H 'Content-Type: application/json' \
-                -d '{
-                "text": "❌ BUILD FAILED
+                curl -X POST -H "Content-Type: application/json" \
+                -d "{\\"text\\": \\"❌ BUILD FAILED
 
 Triggered By: ${buildUser}
 GitHub User: ${commitAuthor}
 Commit Message: ${commitMessage}
 
 Build URL:
-${env.BUILD_URL}"
-                }' \
+${env.BUILD_URL}\\"}" \
                 ${GCHAT_WEBHOOK}
                 """
             }

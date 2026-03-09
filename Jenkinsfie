@@ -10,8 +10,7 @@ pipeline {
 
         stage('Checkout') {
             steps {
-                git branch: 'main',
-                git 'https://github.com/shradhamagdum-lgtm/Demo-app.git'
+                git branch: 'main', url: 'https://github.com/shradhamagdum-lgtm/Demo-app.git'
             }
         }
 
@@ -42,7 +41,6 @@ pipeline {
     post {
 
         success {
-
             script {
 
                 def commitAuthor = sh(script: "git log -1 --pretty=format:'%an'", returnStdout: true).trim()
@@ -54,21 +52,19 @@ pipeline {
                 -d '{
                 "text": "✅ BUILD SUCCESS
 
-                Triggered By: ${buildUser}
-                GitHub User: ${commitAuthor}
-                Commit Message: ${commitMessage}
+Triggered By: ${buildUser}
+GitHub User: ${commitAuthor}
+Commit Message: ${commitMessage}
 
-                Build URL:
-                ${env.BUILD_URL}
-                "}' \
+Build URL:
+${env.BUILD_URL}"
+                }' \
                 ${GCHAT_WEBHOOK}
                 """
             }
-
         }
 
         failure {
-
             script {
 
                 def commitAuthor = sh(script: "git log -1 --pretty=format:'%an'", returnStdout: true).trim()
@@ -80,17 +76,16 @@ pipeline {
                 -d '{
                 "text": "❌ BUILD FAILED
 
-                Triggered By: ${buildUser}
-                GitHub User: ${commitAuthor}
-                Commit Message: ${commitMessage}
+Triggered By: ${buildUser}
+GitHub User: ${commitAuthor}
+Commit Message: ${commitMessage}
 
-                Build URL:
-                ${env.BUILD_URL}
-                "}' \
+Build URL:
+${env.BUILD_URL}"
+                }' \
                 ${GCHAT_WEBHOOK}
                 """
             }
-
         }
 
     }
